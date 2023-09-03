@@ -7,7 +7,7 @@
 #include <CGAL/alpha_wrap_3.h>
 #include <CGAL/Real_timer.h>
 
-#include <CGAL/Polygon_mesh_processing/bbox.h>
+#include <CGAL/Polygon_mesh_processing/bbox.h> .
 #include <CGAL/Polygon_mesh_processing/repair_polygon_soup.h>
 #include <CGAL/Polygon_mesh_processing/orient_polygon_soup.h>
 #include <CGAL/Polygon_mesh_processing/polygon_soup_to_polygon_mesh.h>
@@ -17,26 +17,28 @@
 
 namespace PMP = CGAL::Polygon_mesh_processing;
 
-typedef CGAL::Exact_predicates_inexact_constructions_kernel  K;
-typedef K::FT                                                FT;
+typedef CGAL::Exact_predicates_inexact_constructions_kernel K;
+typedef K::FT FT;
 
-typedef K::Point_3                                           Point;
-//typedef std::array<FT, 3>                                    Custom_point;
+typedef K::Point_3 Point;
+// typedef std::array<FT, 3>                                    Custom_point;
 
-typedef std::vector<size_t>                                  CGAL_Polygon;
-typedef CGAL::Surface_mesh<Point>                            Mesh;
-typedef boost::graph_traits<Mesh>::halfedge_descriptor       halfedge_descriptor;
+typedef std::vector<size_t> CGAL_Polygon;
+typedef CGAL::Surface_mesh<Point> Mesh;
+typedef boost::graph_traits<Mesh>::halfedge_descriptor halfedge_descriptor;
 
-void printWelcome() {
-    std::cout << "wrapwrap" << std::endl << std::endl;
+void printWelcome()
+{
+    std::cout << "wrapwrap" << std::endl
+              << std::endl;
 }
 
-void printHelp() {
+void printHelp()
+{
     auto helpMsg{
-R"(USAGE:
-    wrapwrap -i input_file.obj -alpha realative_alpha -offset relative_offset -o output_file.obj
-)"
-    };
+        R"(USAGE:
+    wrapwrap -i input_file.obj -alpha absolute_alpha -offset absolute_offset -o output_file.obj
+)"};
     std::cout << helpMsg;
 }
 
@@ -66,9 +68,10 @@ struct Array_traits
 /*
  * Polygon mesh processing for Alpha Wrap
  */
-void prepGeom(std::vector<Point>& points, std::vector<CGAL_Polygon>& polygons, Mesh& mesh) {
+void prepGeom(std::vector<Point> &points, std::vector<CGAL_Polygon> &polygons, Mesh &mesh)
+{
     std::cout << "Preparing geometries for wrapping..." << std::endl;
-//    PMP::repair_polygon_soup(points, polygons, CGAL::parameters::geom_traits(Array_traits()));
+    //    PMP::repair_polygon_soup(points, polygons, CGAL::parameters::geom_traits(Array_traits()));
     PMP::repair_polygon_soup(points, polygons);
     PMP::orient_polygon_soup(points, polygons);
     PMP::polygon_soup_to_polygon_mesh(points, polygons, mesh);
@@ -80,46 +83,54 @@ void prepGeom(std::vector<Point>& points, std::vector<CGAL_Polygon>& polygons, M
 /*
  * Fill open boundaries
  */
-void fillHoles(Mesh& mesh) {
-  if (!CGAL::is_closed(mesh)) {
-    std::cout << "Mesh open, filling holes..." << std::endl;
-    // collect boundary halfedges
-    std::vector<halfedge_descriptor> border_cycles;
-    PMP::extract_boundary_cycles(mesh, std::back_inserter(border_cycles));
+void fillHoles(Mesh &mesh)
+{
+    if (!CGAL::is_closed(mesh))
+    {
+        std::cout << "Mesh open, filling holes..." << std::endl;
+        // collect boundary halfedges
+        std::vector<halfedge_descriptor> border_cycles;
+        PMP::extract_boundary_cycles(mesh, std::back_inserter(border_cycles));
 
-    // fill using boundary halfedges
-    for(halfedge_descriptor h : border_cycles)
-      PMP::triangulate_hole(mesh, h, CGAL::Emptyset_iterator());
+        // fill using boundary halfedges
+        for (halfedge_descriptor h : border_cycles)
+            PMP::triangulate_hole(mesh, h, CGAL::Emptyset_iterator());
 
-    std::cout << "  done" << std::endl;
-  }
+        std::cout << "  done" << std::endl;
+    }
 }
 
 /*
  * Alpha wrap
  */
-void wrap(Mesh& mesh, const double relative_alpha, const double relative_offset) {
+void wrap(Mesh &mesh, const double relative_alpha, const double relative_offset)
+{
     std::cout << "Wrapping geometries..." << std::endl;
 
     CGAL::Bbox_3 bbox = PMP::bbox(mesh);
     const double diag_length = std::sqrt(CGAL::square(bbox.xmax() - bbox.xmin()) +
                                          CGAL::square(bbox.ymax() - bbox.ymin()) +
                                          CGAL::square(bbox.zmax() - bbox.zmin()));
-    const double alpha = diag_length / relative_alpha;
-    const double offset = diag_length / relative_offset;
-    CGAL::alpha_wrap_3(mesh, alpha, offset, mesh);
+
+    // PABLO Set Alpha and Offset as absolute values
+    // const double alpha = diag_length / relative_alpha;
+    // const double offset = diag_length / relative_offset;
+
+    CGAL::alpha_wrap_3(mesh, relative_alpha, relative_offset, mesh);
 
     std::cout << "  done" << std::endl;
 }
 
-
-int main(int argc, char** argv) {
+int main(int argc, char **argv)
+{
     std::cout.precision(6);
-    try {
+    try
+    {
         CGAL::Real_timer timer;
         timer.start();
         printWelcome();
-        if (argc < 2) {
+        if (argc < 2)
+        {
             printHelp();
             return EXIT_SUCCESS;
         }
@@ -127,27 +138,37 @@ int main(int argc, char** argv) {
         //-- Input arguments
         std::string inputFile, outputFile;
         std::optional<double> relativeAlpha, relativeOffset;
-        for (int i = 1; i < argc; i++) {
+        for (int i = 1; i < argc; i++)
+        {
             std::string arg = argv[i];
 
-            if (arg == "-i" && i + 1 < argc) {
+            if (arg == "-i" && i + 1 < argc)
+            {
                 inputFile = argv[i + 1];
                 i++;
-            } else if (arg == "-alpha" && i + 1 < argc) {
+            }
+            else if (arg == "-alpha" && i + 1 < argc)
+            {
                 relativeAlpha = std::stod(argv[i + 1]);
                 i++;
-            } else if (arg == "-offset" && i + 1 < argc) {
+            }
+            else if (arg == "-offset" && i + 1 < argc)
+            {
                 relativeOffset = std::stod(argv[i + 1]);
                 i++;
-            } else if (arg == "-o" && i + 1 < argc) {
+            }
+            else if (arg == "-o" && i + 1 < argc)
+            {
                 outputFile = argv[i + 1];
                 i++;
             }
         }
         // Check if all required arguments are provided
-        if (inputFile.empty() || outputFile.empty() || !relativeAlpha || !relativeOffset) {
+        if (inputFile.empty() || outputFile.empty() || !relativeAlpha || !relativeOffset)
+        {
             std::cout << "Missing or invalid arguments. Usage: wrapwrap -i input_file.obj "
-                         "-alpha relative_alpha -offset relative_offset -o output_file" << std::endl;
+                         "-alpha absolute_alpha -offset absolute_offset -o output_file"
+                      << std::endl;
             return 1;
         }
 
@@ -155,7 +176,8 @@ int main(int argc, char** argv) {
         std::cout << "Reading geometries..." << std::endl;
         std::vector<Point> points;
         std::vector<CGAL_Polygon> polygons;
-        if (!CGAL::IO::read_polygon_soup(inputFile, points, polygons)) {
+        if (!CGAL::IO::read_polygon_soup(inputFile, points, polygons))
+        {
             throw std::runtime_error("Cannot open file");
         };
 
@@ -164,7 +186,7 @@ int main(int argc, char** argv) {
         prepGeom(points, polygons, mesh);
 
         //-- Hole filling
-        fillHoles(mesh);
+        // fillHoles(mesh);
 
         //-- Alpha wrapping
         wrap(mesh, relativeAlpha.value(), relativeOffset.value());
@@ -177,10 +199,12 @@ int main(int argc, char** argv) {
         //-- Measure time and end
         timer.stop();
         std::cout << "\nProgram executed in " << timer.time() << " s" << std::endl;
-        std:: cout << "End" << std::endl;
+        std::cout << "End" << std::endl;
 
         return EXIT_SUCCESS;
-    } catch (std::exception& e) {
+    }
+    catch (std::exception &e)
+    {
         std::cerr << "\nProgram failed! Reason: " << e.what() << std::endl;
         std::cout << "End" << std::endl;
         return EXIT_FAILURE;
